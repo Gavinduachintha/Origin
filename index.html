@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dot grid · 240×135</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <p class="eyebrow">Pocket display</p>
+        <h1>Dot grid</h1>
+      </div>
+    </div>
+    <div class="toolbar" role="toolbar" aria-label="Draw">
+      <button type="button" data-tool="pencil" title="Pencil (B)" aria-pressed="true">Pencil</button>
+      <button type="button" data-tool="eraser" title="Eraser (E)" aria-pressed="false">Eraser</button>
+      <button type="button" data-tool="rect" title="Rectangle (R)" aria-pressed="false">Rectangle</button>
+      <button type="button" data-tool="pan" title="Pan (Space)" aria-pressed="false">Pan</button>
+      <button type="button" id="fit" title="Fit the grid (F)">Fit</button>
+      <div class="colors">
+        <div id="swatches" role="group" aria-label="Swatches"></div>
+        <label class="picker">
+          <span>Color</span>
+          <input type="color" id="color" value="#f4f1e8" aria-label="Custom color">
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <div class="stage" id="stage">
+      <canvas id="grid" width="240" height="135" aria-label="240 by 135 dot grid. Each dot is one display pixel."></canvas>
+      <p class="hint" id="hint">Add an element, then paint its dots.</p>
+      <p class="float-cursor" id="float-cursor">x —    y —</p>
+    </div>
+
+    <aside>
+      <section class="readout">
+        <h2>Cursor</h2>
+        <div class="metrics">
+          <div class="metric"><span>x</span><strong id="cursor-x">—</strong></div>
+          <div class="metric"><span>y</span><strong id="cursor-y">—</strong></div>
+        </div>
+        <h2 id="active-name">No element</h2>
+        <div class="metrics">
+          <div class="metric"><span>Start x</span><strong id="start-x">—</strong></div>
+          <div class="metric"><span>Start y</span><strong id="start-y">—</strong></div>
+          <div class="metric"><span>Width</span><strong id="size-w">—</strong></div>
+          <div class="metric"><span>Height</span><strong id="size-h">—</strong></div>
+        </div>
+        <p class="define" id="dot-count">Start is the top-left painted dot.</p>
+      </section>
+
+      <section class="elements">
+        <div class="section-head">
+          <h2>Elements</h2>
+          <p class="define">The top of the list is drawn in front. Hide a piece to see the one under it. Each piece keeps its own start pixel.</p>
+        </div>
+        <form id="add-form">
+          <input id="new-name" name="name" placeholder="Name a piece" maxlength="40" required autocomplete="off" spellcheck="false">
+          <button type="submit">Add</button>
+        </form>
+        <ul id="element-list"></ul>
+      </section>
+
+      <section class="io">
+        <h2>Placements</h2>
+        <p class="define">Front to back. Start x and y are the top-left painted dot.</p>
+        <pre id="placement-text">No elements yet.</pre>
+        <div class="io-actions">
+          <button type="button" id="copy">Copy placements</button>
+          <button type="button" id="download">Download</button>
+          <label class="file">Load<input id="load" type="file" accept="application/json,.json"></label>
+        </div>
+        <p id="status" role="status"></p>
+        <p class="keys">B pencil · E eraser · R rectangle · Space pan · F fit</p>
+      </section>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
