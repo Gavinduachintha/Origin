@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dot grid · 240×135</title>
+  <title>Origin · 240×135</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,7 +12,19 @@
       <div class="mark" aria-hidden="true"></div>
       <div>
         <p class="eyebrow">Pocket display</p>
-        <h1>Dot grid</h1>
+        <h1>Origin</h1>
+        <form id="size-form" class="size-form">
+          <label>
+            Width
+            <input id="grid-width" type="number" min="8" max="480" value="240" required inputmode="numeric">
+          </label>
+          <span class="times" aria-hidden="true">×</span>
+          <label>
+            Height
+            <input id="grid-height" type="number" min="8" max="480" value="135" required inputmode="numeric">
+          </label>
+          <button type="submit">Apply</button>
+        </form>
       </div>
     </div>
     <div class="toolbar" role="toolbar" aria-label="Draw">

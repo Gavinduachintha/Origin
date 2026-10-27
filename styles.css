@@ -103,6 +103,39 @@ h1 {
   letter-spacing: -0.03em;
 }
 
+.size-form {
+  display: flex;
+  align-items: end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.size-form label {
+  display: grid;
+  gap: 2px;
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.size-form input {
+  width: 4.8rem;
+  padding: 4px 6px;
+  font-family: Consolas, "Cascadia Mono", monospace;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  background: #10150f;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.size-form .times {
+  padding-bottom: 6px;
+  color: var(--muted);
+}
+
 h2 {
   font-size: 12px;
   font-weight: 650;

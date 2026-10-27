@@ -1,9 +1,12 @@
 (() => {
   "use strict";
 
-  const GRID_W = 240;
-  const GRID_H = 135;
+  const MIN_GRID = 8;
+  const MAX_GRID = 480;
+  const MAX_PIXELS = 160000;
   const STORAGE_KEY = "display-dot-grid-v1";
+  let gridW = 240;
+  let gridH = 135;
   const SWATCHES = ["#f4f1e8", "#c6f135", "#ffb020", "#ff5a36", "#3ec1ff", "#7aa2ff", "#1a1a1a", "#8d9a86"];
 
   const stage = document.querySelector("#stage");
@@ -26,6 +29,8 @@
   const sizeW = document.querySelector("#size-w");
   const sizeH = document.querySelector("#size-h");
   const dotCount = document.querySelector("#dot-count");
+  const widthInput = document.querySelector("#grid-width");
+  const heightInput = document.querySelector("#grid-height");
   const toolButtons = [...document.querySelectorAll("[data-tool]")];
 
   let cell = 4;
@@ -55,12 +60,14 @@
   let paintLayer = null;
   let layerCell = 0;
   let layerScaleValue = 0;
+  let layerGridW = 0;
+  let layerGridH = 0;
   let gridDirty = true;
   let paintDirty = true;
 
   let doc = {
-    width: GRID_W,
-    height: GRID_H,
+    width: gridW,
+    height: gridH,
     activeElementId: null,
     elements: [],
   };
@@ -104,8 +111,8 @@
   }
 
   function layerScale(dpr) {
-    const maxW = 4096 / (GRID_W * cell);
-    const maxH = 4096 / (GRID_H * cell);
+    const maxW = 4096 / (gridW * cell);
+    const maxH = 4096 / (gridH * cell);
     return Math.min(dpr, maxW, maxH);
   }
 
@@ -292,8 +299,8 @@
   function exportDocument() {
     return {
       version: 1,
-      width: GRID_W,
-      height: GRID_H,
+      width: gridW,
+      height: gridH,
       activeElementId: doc.activeElementId,
       elements: doc.elements.map((el) => {
         const box = bounds(el);
@@ -311,13 +318,25 @@
     };
   }
 
+  function sizeError(width, height) {
+    if (!Number.isInteger(width) || !Number.isInteger(height)) {
+      return "Width and height need to be whole numbers.";
+    }
+    if (width < MIN_GRID || height < MIN_GRID || width > MAX_GRID || height > MAX_GRID) {
+      return "Width and height stay between " + MIN_GRID + " and " + MAX_GRID + ".";
+    }
+    if (width * height > MAX_PIXELS) return "That grid has too many dots to draw smoothly.";
+    return "";
+  }
+
   function parseDocument(data) {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-      return { ok: false, error: "This file is not a dot grid." };
+      return { ok: false, error: "This file is not an Origin design." };
     }
-    if (data.width !== GRID_W || data.height !== GRID_H) {
-      return { ok: false, error: "This grid is not 240×135." };
-    }
+    const width = Math.round(Number(data.width));
+    const height = Math.round(Number(data.height));
+    const invalid = sizeError(width, height);
+    if (invalid) return { ok: false, error: invalid };
     if (!Array.isArray(data.elements)) {
       return { ok: false, error: "This file has no element list." };
     }
@@ -334,7 +353,7 @@
           if (!match) continue;
           const x = +match[1];
           const y = +match[2];
-          if (x >= GRID_W || y >= GRID_H) continue;
+          if (x >= width || y >= height) continue;
           const fill = String(raw.pixels[key]).toLowerCase();
           if (!/^#[0-9a-f]{6}$/.test(fill)) continue;
           pixels[x + "," + y] = fill;
@@ -356,7 +375,7 @@
     }
     return {
       ok: true,
-      doc: { width: GRID_W, height: GRID_H, activeElementId: active, elements },
+      doc: { width, height, activeElementId: active, elements },
     };
   }
 
@@ -374,19 +393,27 @@
   function fit() {
     const rect = stage.getBoundingClientRect();
     const margin = 28;
-    const next = Math.floor(Math.min((rect.width - margin) / GRID_W, (rect.height - margin) / GRID_H));
-    cell = Math.max(2, Math.min(18, next || 2));
-    panX = Math.round((rect.width - GRID_W * cell) / 2);
-    panY = Math.round((rect.height - GRID_H * cell) / 2);
+    const next = Math.floor(Math.min((rect.width - margin) / gridW, (rect.height - margin) / gridH));
+    cell = Math.max(1, Math.min(18, next || 1));
+    panX = Math.round((rect.width - gridW * cell) / 2);
+    panY = Math.round((rect.height - gridH * cell) / 2);
   }
 
   function syncLayers(dpr) {
     const scale = layerScale(dpr);
-    if (gridLayer && layerCell === cell && layerScaleValue === scale) return;
+    if (
+      gridLayer &&
+      layerCell === cell &&
+      layerScaleValue === scale &&
+      layerGridW === gridW &&
+      layerGridH === gridH
+    ) return;
     layerCell = cell;
     layerScaleValue = scale;
-    const width = Math.max(1, Math.ceil(GRID_W * cell * scale));
-    const height = Math.max(1, Math.ceil(GRID_H * cell * scale));
+    layerGridW = gridW;
+    layerGridH = gridH;
+    const width = Math.max(1, Math.ceil(gridW * cell * scale));
+    const height = Math.max(1, Math.ceil(gridH * cell * scale));
     gridLayer = document.createElement("canvas");
     paintLayer = document.createElement("canvas");
     gridLayer.width = width;
@@ -420,14 +447,14 @@
   function rebuildGrid() {
     const g = gridLayer.getContext("2d");
     g.setTransform(layerScaleValue, 0, 0, layerScaleValue, 0, 0);
-    g.clearRect(0, 0, GRID_W * cell, GRID_H * cell);
+    g.clearRect(0, 0, gridW * cell, gridH * cell);
     g.fillStyle = "#314033";
     const radius = dotRadius();
     const chunk = 4000;
     let n = 0;
     g.beginPath();
-    for (let y = 0; y < GRID_H; y += 1) {
-      for (let x = 0; x < GRID_W; x += 1) {
+    for (let y = 0; y < gridH; y += 1) {
+      for (let x = 0; x < gridW; x += 1) {
         const cx = x * cell + cell / 2;
         const cy = y * cell + cell / 2;
         g.moveTo(cx + radius, cy);
@@ -447,7 +474,7 @@
   function rebuildPaint() {
     const g = paintLayer.getContext("2d");
     g.setTransform(layerScaleValue, 0, 0, layerScaleValue, 0, 0);
-    g.clearRect(0, 0, GRID_W * cell, GRID_H * cell);
+    g.clearRect(0, 0, gridW * cell, gridH * cell);
     for (const el of doc.elements) {
       if (!el.visible) continue;
       const byColor = new Map();
@@ -542,8 +569,8 @@
     ctx.fillStyle = "#0b0e0b";
     ctx.fillRect(0, 0, rect.width, rect.height);
     ctx.imageSmoothingEnabled = false;
-    const dw = GRID_W * cell;
-    const dh = GRID_H * cell;
+    const dw = gridW * cell;
+    const dh = gridH * cell;
     ctx.drawImage(gridLayer, panX, panY, dw, dh);
     ctx.drawImage(paintLayer, panX, panY, dw, dh);
     drawOverlay();
@@ -579,14 +606,14 @@
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((event.clientX - rect.left - panX) / cell);
     const y = Math.floor((event.clientY - rect.top - panY) / cell);
-    if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return null;
+    if (x < 0 || y < 0 || x >= gridW || y >= gridH) return null;
     return { x, y };
   }
 
   function paintAt(x, y) {
     const el = activeElement();
     if (!el) return false;
-    if (x < 0 || y < 0 || x >= GRID_W || y >= GRID_H) return false;
+    if (x < 0 || y < 0 || x >= gridW || y >= gridH) return false;
     const key = x + "," + y;
     if (tool === "eraser") {
       if (!(key in el.pixels)) return false;
@@ -629,9 +656,9 @@
     const el = activeElement();
     if (!el) return;
     const x0 = Math.max(0, Math.min(a.x, b.x));
-    const x1 = Math.min(GRID_W - 1, Math.max(a.x, b.x));
+    const x1 = Math.min(gridW - 1, Math.max(a.x, b.x));
     const y0 = Math.max(0, Math.min(a.y, b.y));
-    const y1 = Math.min(GRID_H - 1, Math.max(a.y, b.y));
+    const y1 = Math.min(gridH - 1, Math.max(a.y, b.y));
     for (let y = y0; y <= y1; y += 1) {
       for (let x = x0; x <= x1; x += 1) el.pixels[x + "," + y] = color;
     }
@@ -793,11 +820,70 @@
     scheduleDraw();
   }
 
+  function publishGridSize() {
+    document.title = "Origin · " + gridW + "×" + gridH;
+    canvas.setAttribute("aria-label", gridW + " by " + gridH + " dot grid. Each dot is one display pixel.");
+    widthInput.value = String(gridW);
+    heightInput.value = String(gridH);
+  }
+
+  function clipToGrid(width, height) {
+    let dropped = 0;
+    for (const el of doc.elements) {
+      for (const key of Object.keys(el.pixels)) {
+        const comma = key.indexOf(",");
+        const x = +key.slice(0, comma);
+        const y = +key.slice(comma + 1);
+        if (x >= width || y >= height) {
+          delete el.pixels[key];
+          dropped += 1;
+        }
+      }
+    }
+    return dropped;
+  }
+
+  function resizeGrid(width, height) {
+    const invalid = sizeError(width, height);
+    if (invalid) {
+      showStatus(invalid);
+      publishGridSize();
+      return;
+    }
+    if (width === gridW && height === gridH) return;
+    const dropped = clipToGrid(width, height);
+    doc.width = width;
+    doc.height = height;
+    gridW = width;
+    gridH = height;
+    layerGridW = -1;
+    paintDirty = true;
+    gridDirty = true;
+    userMoved = false;
+    hover = null;
+    rectAnchor = null;
+    rectCurrent = null;
+    fit();
+    publishGridSize();
+    persist();
+    scheduleReadouts();
+    scheduleDraw();
+    showStatus(
+      "Grid is " + width + "×" + height + "." +
+      (dropped ? " Dots past the new edge were removed." : "")
+    );
+  }
+
   function applyLoaded(next, message) {
     doc = next;
+    gridW = doc.width;
+    gridH = doc.height;
+    layerGridW = -1;
     paintDirty = true;
+    gridDirty = true;
     userMoved = false;
     fit();
+    publishGridSize();
     renderList();
     persist();
     scheduleDraw();
@@ -968,12 +1054,17 @@
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.download = "dot-grid.json";
+    link.download = "origin.json";
     document.body.append(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
-    showStatus("Downloaded dot-grid.json.");
+    showStatus("Downloaded origin.json.");
+  });
+
+  document.querySelector("#size-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    resizeGrid(Math.round(Number(widthInput.value)), Math.round(Number(heightInput.value)));
   });
 
   document.querySelector("#load").addEventListener("change", async (event) => {
@@ -1005,7 +1096,12 @@
   } catch {
     storageFailed = true;
   }
-  if (stored) doc = stored;
+  if (stored) {
+    doc = stored;
+    gridW = doc.width;
+    gridH = doc.height;
+  }
+  publishGridSize();
 
   renderList();
   const observer = new ResizeObserver(() => resize());
