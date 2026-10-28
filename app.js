@@ -32,6 +32,8 @@
   const widthInput = document.querySelector("#grid-width");
   const heightInput = document.querySelector("#grid-height");
   const toolButtons = [...document.querySelectorAll("[data-tool]")];
+  const undoButton = document.querySelector("#undo");
+  const redoButton = document.querySelector("#redo");
 
   let cell = 4;
   let panX = 0;
@@ -55,6 +57,13 @@
   let lastViewW = 0;
   let lastViewH = 0;
   let wheelBag = 0;
+  let heldEraser = false;
+  let toolBeforeEraser = null;
+
+  const HISTORY_LIMIT = 40;
+  const undoStack = [];
+  const redoStack = [];
+  let armedBefore = null;
 
   let gridLayer = null;
   let paintLayer = null;
@@ -132,7 +141,7 @@
     }
   }
 
-  function setTool(next) {
+  function applyTool(next) {
     tool = next;
     canvas.dataset.tool = next;
     for (const button of toolButtons) {
@@ -140,6 +149,122 @@
       button.classList.toggle("is-on", on);
       button.setAttribute("aria-pressed", on ? "true" : "false");
     }
+  }
+
+  function setTool(next) {
+    if (heldEraser) {
+      toolBeforeEraser = next;
+      return;
+    }
+    applyTool(next);
+  }
+
+  function beginEraseHold() {
+    if (heldEraser) return;
+    toolBeforeEraser = tool;
+    heldEraser = true;
+    applyTool("eraser");
+  }
+
+  function endEraseHold() {
+    if (!heldEraser) return;
+    heldEraser = false;
+    const next = toolBeforeEraser || "pencil";
+    toolBeforeEraser = null;
+    applyTool(next);
+  }
+
+  function snapshot() {
+    return {
+      width: gridW,
+      height: gridH,
+      activeElementId: doc.activeElementId,
+      elements: doc.elements.map((el) => ({
+        id: el.id,
+        name: el.name,
+        visible: el.visible,
+        pixels: Object.assign({}, el.pixels),
+      })),
+    };
+  }
+
+  function syncHistoryButtons() {
+    undoButton.disabled = undoStack.length === 0;
+    redoButton.disabled = redoStack.length === 0;
+  }
+
+  function pushUndo(snap) {
+    undoStack.push(snap);
+    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+    syncHistoryButtons();
+  }
+
+  function armHistory() {
+    if (!armedBefore) armedBefore = snapshot();
+  }
+
+  function sealHistory() {
+    if (!armedBefore) return;
+    pushUndo(armedBefore);
+    armedBefore = null;
+  }
+
+  function discardHistory() {
+    armedBefore = null;
+  }
+
+  function remember() {
+    discardHistory();
+    pushUndo(snapshot());
+  }
+
+  function restore(snap) {
+    doc = {
+      width: snap.width,
+      height: snap.height,
+      activeElementId: snap.activeElementId,
+      elements: snap.elements.map((el) => ({
+        id: el.id,
+        name: el.name,
+        visible: el.visible,
+        pixels: Object.assign({}, el.pixels),
+      })),
+    };
+    const sizeChanged = gridW !== snap.width || gridH !== snap.height;
+    gridW = snap.width;
+    gridH = snap.height;
+    paintDirty = true;
+    rectAnchor = null;
+    rectCurrent = null;
+    painting = false;
+    if (sizeChanged) {
+      layerGridW = -1;
+      gridDirty = true;
+      userMoved = false;
+      hover = null;
+      fit();
+      publishGridSize();
+    }
+    renderList();
+    persist();
+    scheduleDraw();
+  }
+
+  function undo() {
+    if (painting || rectAnchor || panning || !undoStack.length) return;
+    redoStack.push(snapshot());
+    restore(undoStack.pop());
+    syncHistoryButtons();
+    showStatus("Undid the last change.");
+  }
+
+  function redo() {
+    if (painting || rectAnchor || panning || !redoStack.length) return;
+    undoStack.push(snapshot());
+    restore(redoStack.pop());
+    syncHistoryButtons();
+    showStatus("Redid the last change.");
   }
 
   function updateHint() {
@@ -659,9 +784,16 @@
     const x1 = Math.min(gridW - 1, Math.max(a.x, b.x));
     const y0 = Math.max(0, Math.min(a.y, b.y));
     const y1 = Math.min(gridH - 1, Math.max(a.y, b.y));
+    let changed = false;
     for (let y = y0; y <= y1; y += 1) {
-      for (let x = x0; x <= x1; x += 1) el.pixels[x + "," + y] = color;
+      for (let x = x0; x <= x1; x += 1) {
+        const key = x + "," + y;
+        if (el.pixels[key] === color) continue;
+        el.pixels[key] = color;
+        changed = true;
+      }
     }
+    if (!changed) return;
     paintDirty = true;
     edited = true;
   }
@@ -677,21 +809,26 @@
     panOrigin = null;
     lastCell = null;
     stage.classList.remove("is-grabbing");
-    if (anchor && current && tool === "rect") commitRect(anchor, current);
-    if (edited || (anchor && current && tool === "rect")) {
+    const usedRect = anchor && current && tool === "rect";
+    if (usedRect) commitRect(anchor, current);
+    if (edited) {
       edited = false;
+      sealHistory();
       persist();
       scheduleReadouts();
-    } else if (wasPainting) {
-      scheduleReadouts();
+    } else {
+      discardHistory();
+      if (wasPainting || usedRect) scheduleReadouts();
     }
+    endEraseHold();
     scheduleDraw();
   }
 
   function onPointerDown(event) {
-    if (event.button === 2) return;
+    const eraseHold = event.button === 2;
     event.preventDefault();
-    const wantsPan = event.button === 1 || tool === "pan" || spaceHeld;
+    if (eraseHold) beginEraseHold();
+    const wantsPan = !eraseHold && (event.button === 1 || tool === "pan" || spaceHeld);
     if (wantsPan) {
       panning = true;
       userMoved = true;
@@ -700,7 +837,8 @@
       canvas.setPointerCapture(event.pointerId);
       return;
     }
-    if (event.button !== 0) return;
+    if (!eraseHold && event.button !== 0) return;
+    canvas.setPointerCapture(event.pointerId);
     const pos = cellFromEvent(event);
     hover = pos;
     renderCursor();
@@ -709,8 +847,8 @@
       showStatus("Add an element before painting.");
       return;
     }
-    canvas.setPointerCapture(event.pointerId);
     if (tool === "rect") {
+      armHistory();
       rectAnchor = pos;
       rectCurrent = pos;
       scheduleDraw();
@@ -718,6 +856,7 @@
     }
     painting = true;
     lastCell = pos;
+    armHistory();
     if (paintAt(pos.x, pos.y)) edited = true;
     scheduleDraw();
     scheduleReadouts();
@@ -789,6 +928,7 @@
     const index = doc.elements.findIndex((item) => item.id === id);
     const next = index + delta;
     if (index < 0 || next < 0 || next >= doc.elements.length) return;
+    remember();
     const [el] = doc.elements.splice(index, 1);
     doc.elements.splice(next, 0, el);
     doc.activeElementId = id;
@@ -801,6 +941,7 @@
   function toggleVisible(id) {
     const el = doc.elements.find((item) => item.id === id);
     if (!el) return;
+    remember();
     el.visible = !el.visible;
     doc.activeElementId = id;
     paintDirty = true;
@@ -810,6 +951,7 @@
   }
 
   function removeElement(id) {
+    remember();
     doc.elements = doc.elements.filter((item) => item.id !== id);
     if (doc.activeElementId === id) {
       doc.activeElementId = doc.elements.length ? doc.elements[doc.elements.length - 1].id : null;
@@ -851,6 +993,7 @@
       return;
     }
     if (width === gridW && height === gridH) return;
+    remember();
     const dropped = clipToGrid(width, height);
     doc.width = width;
     doc.height = height;
@@ -875,6 +1018,7 @@
   }
 
   function applyLoaded(next, message) {
+    remember();
     doc = next;
     gridW = doc.width;
     gridH = doc.height;
@@ -920,6 +1064,7 @@
     event.preventDefault();
     const name = cleanName(newName.value);
     if (!name) return;
+    remember();
     const el = { id: uid(), name, visible: true, pixels: {} };
     doc.elements.push(el);
     doc.activeElementId = el.id;
@@ -968,10 +1113,11 @@
     const el = doc.elements.find((item) => item.id === row.dataset.id);
     if (!el) return;
     const name = cleanName(event.target.value);
-    if (!name) {
+    if (!name || name === el.name) {
       event.target.value = el.name;
       return;
     }
+    remember();
     el.name = name;
     event.target.value = name;
     const hide = row.querySelector("[data-action='hide']");
@@ -1002,7 +1148,19 @@
     zoomAt(event.clientX, event.clientY, direction);
   }, { passive: false });
 
+  undoButton.addEventListener("click", undo);
+  redoButton.addEventListener("click", redo);
+
   window.addEventListener("keydown", (event) => {
+    const key = event.key.toLowerCase();
+    const command = event.ctrlKey || event.metaKey;
+    if (command && !event.altKey && (key === "z" || key === "y")) {
+      if (event.target.closest("input, textarea")) return;
+      event.preventDefault();
+      if (key === "y" || event.shiftKey) redo();
+      else undo();
+      return;
+    }
     if (event.target.closest("input, textarea")) return;
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.code === "Space") {
@@ -1031,6 +1189,7 @@
   window.addEventListener("blur", () => {
     spaceHeld = false;
     stage.classList.remove("is-panning");
+    if (heldEraser || painting || rectAnchor || panning) endPointer();
   });
 
   document.querySelector("#copy").addEventListener("click", async () => {

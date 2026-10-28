@@ -32,6 +32,8 @@
       <button type="button" data-tool="eraser" title="Eraser (E)" aria-pressed="false">Eraser</button>
       <button type="button" data-tool="rect" title="Rectangle (R)" aria-pressed="false">Rectangle</button>
       <button type="button" data-tool="pan" title="Pan (Space)" aria-pressed="false">Pan</button>
+      <button type="button" id="undo" title="Undo (Ctrl+Z)" disabled>Undo</button>
+      <button type="button" id="redo" title="Redo (Ctrl+Y)" disabled>Redo</button>
       <button type="button" id="fit" title="Fit the grid (F)">Fit</button>
       <div class="colors">
         <div id="swatches" role="group" aria-label="Swatches"></div>
@@ -89,7 +91,7 @@
           <label class="file">Load<input id="load" type="file" accept="application/json,.json"></label>
         </div>
         <p id="status" role="status"></p>
-        <p class="keys">B pencil · E eraser · R rectangle · Space pan · F fit</p>
+        <p class="keys">B pencil · E eraser · R rectangle · Space pan · F fit · Ctrl+Z undo · Ctrl+Y redo · Hold right mouse to erase</p>
       </section>
     </aside>
   </div>
