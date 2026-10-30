@@ -11,7 +11,6 @@
     <div class="brand">
       <div class="mark" aria-hidden="true"></div>
       <div>
-        <p class="eyebrow">Pocket display</p>
         <h1>Origin</h1>
         <form id="size-form" class="size-form">
           <label>
@@ -31,6 +30,7 @@
       <button type="button" data-tool="pencil" title="Pencil (B)" aria-pressed="true">Pencil</button>
       <button type="button" data-tool="eraser" title="Eraser (E)" aria-pressed="false">Eraser</button>
       <button type="button" data-tool="rect" title="Rectangle (R)" aria-pressed="false">Rectangle</button>
+      <button type="button" data-tool="circle" title="Circle (C)" aria-pressed="false">Circle</button>
       <button type="button" data-tool="pan" title="Pan (Space)" aria-pressed="false">Pan</button>
       <button type="button" id="undo" title="Undo (Ctrl+Z)" disabled>Undo</button>
       <button type="button" id="redo" title="Redo (Ctrl+Y)" disabled>Redo</button>
@@ -39,7 +39,7 @@
         <div id="swatches" role="group" aria-label="Swatches"></div>
         <label class="picker">
           <span>Color</span>
-          <input type="color" id="color" value="#f4f1e8" aria-label="Custom color">
+          <input type="color" id="color" value="#f2f5f7" aria-label="Custom color">
         </label>
       </div>
     </div>
@@ -61,10 +61,10 @@
         </div>
         <h2 id="active-name">No element</h2>
         <div class="metrics">
-          <div class="metric"><span>Start x</span><strong id="start-x">—</strong></div>
-          <div class="metric"><span>Start y</span><strong id="start-y">—</strong></div>
-          <div class="metric"><span>Width</span><strong id="size-w">—</strong></div>
-          <div class="metric"><span>Height</span><strong id="size-h">—</strong></div>
+          <div class="metric"><span id="label-x">Start x</span><strong id="start-x">—</strong></div>
+          <div class="metric"><span id="label-y">Start y</span><strong id="start-y">—</strong></div>
+          <div class="metric"><span id="label-w">Width</span><strong id="size-w">—</strong></div>
+          <div class="metric"><span id="label-h">Height</span><strong id="size-h">—</strong></div>
         </div>
         <p class="define" id="dot-count">Start is the top-left painted dot.</p>
       </section>
@@ -91,11 +91,11 @@
           <label class="file">Load<input id="load" type="file" accept="application/json,.json"></label>
         </div>
         <p id="status" role="status"></p>
-        <p class="keys">B pencil · E eraser · R rectangle · Space pan · F fit · Ctrl+Z undo · Ctrl+Y redo · Hold right mouse to erase</p>
+        <p class="keys">B pencil · E eraser · R rectangle · C circle · Space pan · F fit · Ctrl+Z undo · Ctrl+Y redo · Hold right mouse to erase</p>
       </section>
     </aside>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

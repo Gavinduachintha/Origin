@@ -1,0 +1,27 @@
+{
+  "name": "origin-video",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render src/index.ts Origin out/origin.mp4 --jpeg-quality=92",
+    "audio": "python scripts/make_audio.py",
+    "preview": "remotion render src/index.ts OriginShowcase out/preview.mp4 --scale=0.5 --jpeg-quality=75",
+    "showcase": "remotion render src/index.ts OriginShowcase out/origin-showcase.mp4 --jpeg-quality=90"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^8.17.10",
+    "@remotion/cli": "4.0.539",
+    "@remotion/three": "^4.0.539",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.539",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "@types/three": "^0.169.0",
+    "typescript": "5.8.2"
+  }
+}

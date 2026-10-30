@@ -1,15 +1,23 @@
 :root {
-  color-scheme: dark;
-  --bg: #10140f;
-  --panel: #161c16;
-  --stage: #0b0e0b;
-  --line: #2c382c;
-  --text: #f3f6ef;
-  --muted: #b7c4ae;
-  --faint: #8fa18a;
-  --accent: #c6f135;
-  --accent-ink: #142000;
-  --danger: #e7b2a4;
+  color-scheme: light;
+  --bg: #dfe6ea;
+  --panel: #f3f6f8;
+  --stage: #12181c;
+  --inset: #e8eef1;
+  --line: #c5d0d6;
+  --text: #172229;
+  --muted: #3d5160;
+  --faint: #5a6e7c;
+  --accent: #0b6e6a;
+  --accent-ink: #f4fffe;
+  --danger: #b42318;
+  --code: #24343c;
+  --control: #ffffff;
+  --control-line: #b4c2ca;
+  --dot: #3c4b56;
+  --mark: #3dccc7;
+  --hairline: #e7eef2;
+  --cursor-bg: rgba(18, 24, 28, 0.9);
   font-family: "Segoe UI", sans-serif;
 }
 
@@ -34,8 +42,8 @@ button, input, label {
 }
 
 button, .file {
-  background: #222a20;
-  border: 1px solid #3a4838;
+  background: var(--control);
+  border: 1px solid var(--control-line);
   border-radius: 4px;
   padding: 6px 10px;
   cursor: pointer;
@@ -126,8 +134,8 @@ h1 {
   font-size: 14px;
   letter-spacing: 0;
   text-transform: none;
-  background: #10150f;
-  border: 1px solid var(--line);
+  background: var(--control);
+  border: 1px solid var(--control-line);
   border-radius: 4px;
 }
 
@@ -163,7 +171,7 @@ input[type="color"] {
   width: 36px;
   height: 28px;
   padding: 0;
-  border: 1px solid #3a4838;
+  border: 1px solid var(--control-line);
   background: none;
   cursor: pointer;
 }
@@ -208,7 +216,8 @@ canvas {
 
 canvas[data-tool="pencil"],
 canvas[data-tool="eraser"],
-canvas[data-tool="rect"] {
+canvas[data-tool="rect"],
+canvas[data-tool="circle"] {
   cursor: crosshair;
 }
 
@@ -228,7 +237,7 @@ canvas[data-tool="pan"],
   place-items: center;
   margin: 0;
   pointer-events: none;
-  color: var(--accent);
+  color: var(--hairline);
   font-size: 18px;
 }
 
@@ -240,8 +249,9 @@ canvas[data-tool="pan"],
   bottom: 12px;
   margin: 0;
   padding: 4px 8px;
-  background: rgba(16, 21, 15, 0.88);
-  border: 1px solid var(--line);
+  color: var(--hairline);
+  background: var(--cursor-bg);
+  border: 1px solid rgba(231, 238, 242, 0.22);
   font-family: Consolas, "Cascadia Mono", monospace;
   font-size: 13px;
   pointer-events: none;
@@ -289,7 +299,7 @@ section {
 }
 
 .metric {
-  background: #10150f;
+  background: var(--inset);
   border: 1px solid var(--line);
   padding: 8px 10px;
 }
@@ -322,8 +332,8 @@ section {
 #new-name, .name {
   font: inherit;
   color: inherit;
-  background: #10150f;
-  border: 1px solid var(--line);
+  background: var(--control);
+  border: 1px solid var(--control-line);
   border-radius: 4px;
   padding: 6px 8px;
 }
@@ -346,7 +356,7 @@ section {
   gap: 6px;
   padding: 8px;
   border: 1px solid transparent;
-  background: #10150f;
+  background: var(--inset);
 }
 
 .element.is-active {
@@ -369,7 +379,7 @@ section {
   font-family: Consolas, "Cascadia Mono", monospace;
   font-size: 12px;
   line-height: 1.5;
-  color: #d5e2c8;
+  color: var(--code);
 }
 
 .actions button, .element-top button {

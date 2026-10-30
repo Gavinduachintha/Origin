@@ -14,10 +14,10 @@
 **Paint your pocket display, one dot at a time.**
 Read off the pixel where every element starts. No more counting.
 
-![Canvas](https://img.shields.io/badge/render-HTML%20canvas-c6f135?style=flat-square&labelColor=10140f)
-![Dependencies](https://img.shields.io/badge/dependencies-none-c6f135?style=flat-square&labelColor=10140f)
-![Default grid](https://img.shields.io/badge/default%20grid-240%C3%97135-c6f135?style=flat-square&labelColor=10140f)
-![Color](https://img.shields.io/badge/color-full%20RGB-c6f135?style=flat-square&labelColor=10140f)
+![Canvas](https://img.shields.io/badge/render-HTML%20canvas-0b6e6a?style=flat-square&labelColor=f3f6f8)
+![Dependencies](https://img.shields.io/badge/dependencies-none-0b6e6a?style=flat-square&labelColor=f3f6f8)
+![Default grid](https://img.shields.io/badge/default%20grid-240%C3%97135-0b6e6a?style=flat-square&labelColor=f3f6f8)
+![Color](https://img.shields.io/badge/color-full%20RGB-0b6e6a?style=flat-square&labelColor=f3f6f8)
 
 </div>
 
@@ -46,7 +46,7 @@ Laying out a UI for a small display means choosing sizes and gaps by hand, and e
 
 ## Getting started
 
-There is nothing to install. It is three static files.
+There is nothing to install. The page and its scripts are static files.
 
 ```bash
 cd display
@@ -55,7 +55,7 @@ python -m http.server 8765
 
 Then open **http://127.0.0.1:8765/**.
 
-Any static file server works. The page loads no external scripts, so opening `index.html` straight from disk should also work, though your browser may store the saved design separately for each address.
+Any static file server works. The scripts are browser modules, so open the page through that server. A browser will not load them from a `file://` address.
 
 ---
 
@@ -77,6 +77,7 @@ Any static file server works. The page loads no external scripts, so opening `in
 | Pencil | `B` | Paints single dots into the active element. Drag to draw a continuous line. |
 | Eraser | `E` | Removes dots from the active element only. |
 | Rectangle | `R` | Drag to fill a solid block with the current color. |
+| Circle | `C` | Press at the center, then drag out the radius. The readout gives `cx`, `cy`, and `r` for a filled-circle call. |
 | Pan | `Space` | Hold and drag to move the grid. Middle mouse button also pans. |
 | Fit | `F` | Scales and centers the whole grid in the window. |
 | Zoom | wheel | Zooms toward the pointer, so a single dot stays easy to hit. |
@@ -106,6 +107,7 @@ Each layer reports its own start pixel, so a button drawn underneath a panel kee
 ```text
 battery  x=200  y=4  w=16  h=10
 clock    x=88   y=52 w=64  h=24
+dial     cx=120  cy=67  r=18  x=102  y=49  w=37  h=37
 ```
 
 An element with no dots is listed as `(empty)`.
@@ -134,7 +136,7 @@ The file looks like this:
       "name": "battery",
       "visible": true,
       "x": 200, "y": 4, "w": 16, "h": 10,
-      "pixels": { "200,4": "#c6f135" }
+      "pixels": { "200,4": "#0b6e6a" }
     }
   ]
 }
@@ -171,10 +173,18 @@ Enter a new **Width** and **Height** and press **Apply**.
 
 ```
 display/
-├── index.html    page shell: grid, toolbar, element list, placement readout
-├── styles.css    layout and the dark, lime-on-green look
-├── app.js        grid math, layers, painting, saving and loading
-└── README.md     you are here
+├── index.html       page shell: grid, toolbar, element list, placement readout
+├── styles.css       layout and the light bench theme, with a dark display stage
+├── js/
+│   ├── main.js      wires the page: tools, keys, save, load, startup
+│   ├── session.js   shared state and the limits
+│   ├── document.js  element geometry, placements, and file parsing
+│   ├── history.js   undo and redo
+│   ├── readouts.js  cursor, measurements, and the element list
+│   ├── render.js    grid drawing
+│   ├── paint.js     pencil, eraser, rectangle, circle, pan, and zoom
+│   └── storage.js   browser save, grid resize, and loading a file
+└── README.md        you are here
 ```
 
 ---
@@ -183,11 +193,13 @@ display/
 
 | Swatch | Hex | Role |
 |:---:|:---:|---|
-| ![](https://img.shields.io/badge/-%20%20%20-10140f?style=flat-square) | `#10140f` | Background |
-| ![](https://img.shields.io/badge/-%20%20%20-161c16?style=flat-square) | `#161c16` | Panels |
-| ![](https://img.shields.io/badge/-%20%20%20-314033?style=flat-square) | `#314033` | Empty dots |
-| ![](https://img.shields.io/badge/-%20%20%20-c6f135?style=flat-square) | `#c6f135` | Accent and selection |
-| ![](https://img.shields.io/badge/-%20%20%20-f3f6ef?style=flat-square) | `#f3f6ef` | Text |
+| ![](https://img.shields.io/badge/-%20%20%20-dfe6ea?style=flat-square) | `#dfe6ea` | Bench background |
+| ![](https://img.shields.io/badge/-%20%20%20-f3f6f8?style=flat-square) | `#f3f6f8` | Panels |
+| ![](https://img.shields.io/badge/-%20%20%20-12181c?style=flat-square) | `#12181c` | Display stage |
+| ![](https://img.shields.io/badge/-%20%20%20-3c4b56?style=flat-square) | `#3c4b56` | Empty dots |
+| ![](https://img.shields.io/badge/-%20%20%20-0b6e6a?style=flat-square) | `#0b6e6a` | Accent |
+| ![](https://img.shields.io/badge/-%20%20%20-3dccc7?style=flat-square) | `#3dccc7` | Selection on the stage |
+| ![](https://img.shields.io/badge/-%20%20%20-172229?style=flat-square) | `#172229` | Text |
 
 ---
 
