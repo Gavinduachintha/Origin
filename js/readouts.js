@@ -57,34 +57,42 @@ export function installReadouts(app) {
       app.startY.textContent = "—";
       app.sizeW.textContent = "—";
       app.sizeH.textContent = "—";
-      app.dotCount.textContent = "Add an element, then paint its dots. Start is the top-left painted dot.";
+      app.dotCount.textContent = "Add an element. It starts as a box you can size and align.";
+      app.syncGeometryForm(null, true);
       return;
     }
     app.activeName.textContent = el.name;
     if (draft) {
       app.showCircleReadout(draft);
+      app.syncGeometryForm(null, true);
       return;
     }
-    if (el.circle) {
+    if (el.circle && !el.box) {
       app.showCircleReadout(el.circle);
+      app.syncGeometryForm(null, true);
       return;
     }
     app.showBoxReadout();
-    const box = app.bounds(el);
+    const box = app.geometry(el);
     if (!box) {
       app.startX.textContent = "—";
       app.startY.textContent = "—";
       app.sizeW.textContent = "—";
       app.sizeH.textContent = "—";
-      app.dotCount.textContent = "No dots yet. Start is the top-left painted dot.";
+      app.dotCount.textContent = "No size yet. Set width and height, or paint a few dots.";
+      app.syncGeometryForm(null, false);
       return;
     }
     app.startX.textContent = String(box.x);
     app.startY.textContent = String(box.y);
     app.sizeW.textContent = String(box.w);
     app.sizeH.textContent = String(box.h);
-    const noun = box.n === 1 ? " dot. " : " dots. ";
-    app.dotCount.textContent = box.n + noun + "Start is the top-left painted dot.";
+    const right = app.gridW - (box.x + box.w);
+    const bottom = app.gridH - (box.y + box.h);
+    const ink = app.bounds(el);
+    const inkNote = ink ? ink.n + (ink.n === 1 ? " painted dot. " : " painted dots. ") : "";
+    app.dotCount.textContent = inkNote + "Margins  left " + box.x + " · right " + right + " · top " + box.y + " · bottom " + bottom + ".";
+    app.syncGeometryForm(box, false);
   };
 
   app.updateListMeta = function updateListMeta() {
@@ -92,12 +100,12 @@ export function installReadouts(app) {
       const el = app.doc.elements.find((item) => item.id === row.dataset.id);
       const meta = row.querySelector(".meta");
       if (!el || !meta) continue;
-      const box = app.bounds(el);
-      if (el.circle) {
+      const frame = app.geometry(el);
+      if (el.circle && !el.box) {
         meta.textContent = "cx=" + el.circle.x + "  cy=" + el.circle.y + "  r=" + el.circle.r;
       } else {
-        meta.textContent = box
-          ? "x=" + box.x + "  y=" + box.y + "  ·  " + box.w + "×" + box.h
+        meta.textContent = frame
+          ? "x=" + frame.x + "  y=" + frame.y + "  ·  " + frame.w + "×" + frame.h
           : "empty";
       }
     }
@@ -116,6 +124,25 @@ export function installReadouts(app) {
     requestAnimationFrame(() => {
       app.readoutScheduled = false;
       app.refreshReadouts();
+    });
+  };
+
+  app.syncGeometryForm = function syncGeometryForm(box, locked) {
+    const align = document.querySelector(".align");
+    const inputs = [
+      document.querySelector("#geom-x"),
+      document.querySelector("#geom-y"),
+      document.querySelector("#geom-w"),
+      document.querySelector("#geom-h"),
+    ];
+    for (const input of inputs) input.disabled = locked;
+    document.querySelector("#geom-form button[type='submit']").disabled = locked;
+    document.querySelector("#fill-box").disabled = locked || !box;
+    for (const button of align.querySelectorAll("button")) button.disabled = locked || !box;
+    const values = box ? [box.x, box.y, box.w, box.h] : ["", "", "", ""];
+    inputs.forEach((input, index) => {
+      if (document.activeElement === input) return;
+      input.value = String(values[index]);
     });
   };
 

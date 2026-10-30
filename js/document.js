@@ -45,6 +45,7 @@ export function installDocument(app) {
       visible: el.visible,
       pixels: Object.assign({}, el.pixels),
       circle: el.circle ? { x: el.circle.x, y: el.circle.y, r: el.circle.r } : null,
+      box: el.box ? { x: el.box.x, y: el.box.y, w: el.box.w, h: el.box.h, fill: el.box.fill } : null,
     }));
   };
 
@@ -70,6 +71,9 @@ export function installDocument(app) {
           record.cx = el.circle.x;
           record.cy = el.circle.y;
           record.r = el.circle.r;
+        }
+        if (el.box) {
+          record.box = { x: el.box.x, y: el.box.y, w: el.box.w, h: el.box.h, fill: el.box.fill };
         }
         return record;
       }),
@@ -132,12 +136,34 @@ export function installDocument(app) {
           circle = { x: cx, y: cy, r: radius };
         }
       }
+      let box = null;
+      if (raw.box && typeof raw.box === "object") {
+        const bx = Math.round(Number(raw.box.x));
+        const by = Math.round(Number(raw.box.y));
+        const bw = Math.round(Number(raw.box.w));
+        const bh = Math.round(Number(raw.box.h));
+        const fill = String(raw.box.fill || "").toLowerCase();
+        if (
+          Number.isInteger(bx) && Number.isInteger(by) && Number.isInteger(bw) && Number.isInteger(bh) &&
+          bw >= 1 && bh >= 1 && bx >= 0 && by >= 0 && bx < width && by < height &&
+          /^#[0-9a-f]{6}$/.test(fill)
+        ) {
+          box = {
+            x: bx,
+            y: by,
+            w: Math.min(bw, width - bx),
+            h: Math.min(bh, height - by),
+            fill,
+          };
+        }
+      }
       elements.push({
         id,
         name,
         visible: raw.visible !== false,
         pixels,
         circle,
+        box,
       });
     }
     let active = data.activeElementId;
@@ -165,12 +191,38 @@ export function installDocument(app) {
         }
       }
       if (clipped) el.circle = null;
+      if (el.box) {
+        if (el.box.x >= width || el.box.y >= height) {
+          el.box = null;
+          dropped += 1;
+        } else {
+          el.box.w = Math.min(el.box.w, width - el.box.x);
+          el.box.h = Math.min(el.box.h, height - el.box.y);
+        }
+      }
     }
     return dropped;
   };
 
+  app.geometry = function geometry(el) {
+    if (el.box) return { x: el.box.x, y: el.box.y, w: el.box.w, h: el.box.h };
+    return app.bounds(el);
+  };
+
+  app.freshBox = function freshBox() {
+    const w = Math.max(8, Math.min(80, Math.round(app.gridW / 4)));
+    const h = Math.max(8, Math.min(40, Math.round(app.gridH / 5)));
+    return {
+      x: Math.max(0, Math.floor((app.gridW - w) / 2)),
+      y: Math.max(0, Math.floor((app.gridH - h) / 2)),
+      w: Math.min(w, app.gridW),
+      h: Math.min(h, app.gridH),
+      fill: app.color,
+    };
+  };
+
   app.placementLine = function placementLine(el) {
-    const box = app.bounds(el);
+    const box = app.geometry(el);
     if (el.circle) {
       const circle = el.circle;
       const extent = box

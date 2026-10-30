@@ -31,6 +31,7 @@
       <button type="button" data-tool="eraser" title="Eraser (E)" aria-pressed="false">Eraser</button>
       <button type="button" data-tool="rect" title="Rectangle (R)" aria-pressed="false">Rectangle</button>
       <button type="button" data-tool="circle" title="Circle (C)" aria-pressed="false">Circle</button>
+      <button type="button" data-tool="move" title="Move (V). Click an element and drag it." aria-pressed="false">Move</button>
       <button type="button" data-tool="pan" title="Pan (Space)" aria-pressed="false">Pan</button>
       <button type="button" id="undo" title="Undo (Ctrl+Z)" disabled>Undo</button>
       <button type="button" id="redo" title="Redo (Ctrl+Y)" disabled>Redo</button>
@@ -48,7 +49,7 @@
   <div class="workspace">
     <div class="stage" id="stage">
       <canvas id="grid" width="240" height="135" aria-label="240 by 135 dot grid. Each dot is one display pixel."></canvas>
-      <p class="hint" id="hint">Add an element, then paint its dots.</p>
+      <p class="hint" id="hint">Add an element. Size it, then align it on the display.</p>
       <p class="float-cursor" id="float-cursor">x —    y —</p>
     </div>
 
@@ -66,7 +67,23 @@
           <div class="metric"><span id="label-w">Width</span><strong id="size-w">—</strong></div>
           <div class="metric"><span id="label-h">Height</span><strong id="size-h">—</strong></div>
         </div>
-        <p class="define" id="dot-count">Start is the top-left painted dot.</p>
+        <p class="define" id="dot-count">Start is the top-left of the element.</p>
+        <form id="geom-form" class="geom">
+          <label>X <input id="geom-x" type="number" min="0" step="1" inputmode="numeric"></label>
+          <label>Y <input id="geom-y" type="number" min="0" step="1" inputmode="numeric"></label>
+          <label>W <input id="geom-w" type="number" min="1" step="1" inputmode="numeric"></label>
+          <label>H <input id="geom-h" type="number" min="1" step="1" inputmode="numeric"></label>
+          <button type="submit">Set size</button>
+          <button type="button" id="fill-box">Fill</button>
+        </form>
+        <div class="align" role="group" aria-label="Align to the display">
+          <button type="button" data-align="left">Left</button>
+          <button type="button" data-align="center">Center</button>
+          <button type="button" data-align="right">Right</button>
+          <button type="button" data-align="top">Top</button>
+          <button type="button" data-align="middle">Middle</button>
+          <button type="button" data-align="bottom">Bottom</button>
+        </div>
       </section>
 
       <section class="elements">
@@ -91,7 +108,7 @@
           <label class="file">Load<input id="load" type="file" accept="application/json,.json"></label>
         </div>
         <p id="status" role="status"></p>
-        <p class="keys">B pencil · E eraser · R rectangle · C circle · Space pan · F fit · Ctrl+Z undo · Ctrl+Y redo · Hold right mouse to erase</p>
+        <p class="keys">V move · B pencil · E eraser · R rectangle · C circle · Space pan · F fit · Ctrl+Z undo · Ctrl+Y redo · Hold right mouse to erase</p>
       </section>
     </aside>
   </div>

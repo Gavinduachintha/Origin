@@ -62,9 +62,9 @@ Any static file server works. The scripts are browser modules, so open the page 
 ## A first session
 
 1. **Set the screen.** Enter the width and height of your display under the title and press **Apply**. The default is 240×135.
-2. **Name a piece.** Type `battery`, `clock`, `button`, and press **Add**. It becomes the active layer.
-3. **Paint.** Use the pencil for single dots, the rectangle for solid blocks.
-4. **Read the numbers.** The panel shows the piece's start x, start y, width and height.
+2. **Name a piece.** Type `battery`, `clock`, `button`, and press **Add**. It lands as a box in the middle of the screen.
+3. **Size and align.** Type x, y, width, and height, or press **Left**, **Center**, **Right**, **Top**, **Middle**, or **Bottom**. **Move** (`V`) drags the box and keeps it on the display.
+4. **Read the numbers.** The panel shows start x, start y, width, height, and the margin on each side.
 5. **Stack.** Add a second piece over the first. Hide the top one to edit what is beneath it.
 6. **Copy placements.** One click puts every piece's position on the clipboard.
 
@@ -74,6 +74,7 @@ Any static file server works. The scripts are browser modules, so open the page 
 
 | Tool | Key | What it does |
 |---|:---:|---|
+| Move | `V` | Click an element and drag it. The box stays inside the display. |
 | Pencil | `B` | Paints single dots into the active element. Drag to draw a continuous line. |
 | Eraser | `E` | Removes dots from the active element only. |
 | Rectangle | `R` | Drag to fill a solid block with the current color. |
@@ -206,10 +207,14 @@ display/
 ## Limits
 
 - Output is placements and JSON. There is no firmware or C export yet.
-- Elements are defined by their dots. Moving a piece means redrawing it.
+- Painted dots do not scale when you change a box's width or height. The box is the layout; the dots stay where you put them.
 - Undo is not implemented.
 
 ---
+
+## Developer
+
+[Gavinduachintha](https://github.com/Gavinduachintha) · [Origin](https://github.com/Gavinduachintha/Origin)
 
 <div align="center">
 

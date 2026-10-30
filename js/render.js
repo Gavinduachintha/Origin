@@ -97,6 +97,15 @@ export function installRender(app) {
     g.clearRect(0, 0, app.gridW * app.cell, app.gridH * app.cell);
     for (const el of app.doc.elements) {
       if (!el.visible) continue;
+      if (el.box) {
+        g.fillStyle = el.box.fill;
+        g.fillRect(
+          el.box.x * app.cell,
+          el.box.y * app.cell,
+          el.box.w * app.cell,
+          el.box.h * app.cell
+        );
+      }
       const byColor = new Map();
       for (const key in el.pixels) {
         const fill = el.pixels[key];
@@ -130,6 +139,11 @@ export function installRender(app) {
     g.globalCompositeOperation = "source-over";
     for (const el of app.doc.elements) {
       if (!el.visible) continue;
+      const box = el.box;
+      if (box && x >= box.x && y >= box.y && x < box.x + box.w && y < box.y + box.h) {
+        g.fillStyle = box.fill;
+        g.fillRect(x * app.cell, y * app.cell, app.cell, app.cell);
+      }
       const fill = el.pixels[x + "," + y];
       if (!fill) continue;
       g.fillStyle = fill;
@@ -174,7 +188,7 @@ export function installRender(app) {
 
     const el = app.activeElement();
     if (!el) return;
-    const box = app.bounds(el);
+    const box = app.geometry(el);
     if (!box) return;
     ctx.save();
     ctx.strokeStyle = app.MARK_COLOR;

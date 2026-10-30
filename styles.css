@@ -221,6 +221,14 @@ canvas[data-tool="circle"] {
   cursor: crosshair;
 }
 
+canvas[data-tool="move"] {
+  cursor: default;
+}
+
+.stage.is-movable canvas[data-tool="move"] {
+  cursor: grab;
+}
+
 canvas[data-tool="pan"],
 .stage.is-panning canvas {
   cursor: grab;
@@ -310,6 +318,47 @@ section {
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.geom, .align {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.geom {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.geom label {
+  display: grid;
+  gap: 2px;
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.geom input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--control-line);
+  border-radius: 4px;
+  background: var(--control);
+  font-family: Consolas, "Cascadia Mono", monospace;
+}
+
+.geom button, .align button {
+  padding: 6px 4px;
+}
+
+.geom button {
+  align-self: end;
+}
+
+.align {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .metric strong {
@@ -405,6 +454,25 @@ pre {
 }
 
 .keys { margin-top: 8px; }
+
+.credit {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex: none;
+  padding: 8px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.credit a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.credit a:hover { text-decoration: underline; }
 
 .empty {
   color: var(--faint);

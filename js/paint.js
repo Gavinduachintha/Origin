@@ -152,7 +152,10 @@ export function installPaint(app) {
     app.panning = false;
     app.panOrigin = null;
     app.lastCell = null;
+    app.moveFrom = null;
+    app.dragId = null;
     app.stage.classList.remove("is-grabbing");
+    app.stage.classList.remove("is-movable");
     const usedRect = anchor && current && app.tool === "rect";
     const usedCircle = anchor && current && app.tool === "circle";
     if (usedRect) app.commitRect(anchor, current);
@@ -193,6 +196,19 @@ export function installPaint(app) {
       app.showStatus("Add an element before painting.");
       return;
     }
+    if (app.tool === "move") {
+      const hit = app.elementAt(pos.x, pos.y);
+      if (!hit) {
+        app.showStatus("Click an element to drag it.");
+        return;
+      }
+      app.selectElement(hit.id);
+      app.armHistory();
+      app.dragId = hit.id;
+      app.moveFrom = pos;
+      app.stage.classList.add("is-grabbing");
+      return;
+    }
     if (app.tool === "rect" || app.tool === "circle") {
       app.armHistory();
       app.rectAnchor = pos;
@@ -222,6 +238,22 @@ export function installPaint(app) {
       app.userMoved = true;
       app.scheduleDraw();
       return;
+    }
+    if (app.dragId && app.moveFrom && pos) {
+      const el = app.doc.elements.find((item) => item.id === app.dragId);
+      if (el) {
+        const applied = app.nudgeElement(el, pos.x - app.moveFrom.x, pos.y - app.moveFrom.y);
+        if (applied.dx || applied.dy) {
+          app.moveFrom = { x: app.moveFrom.x + applied.dx, y: app.moveFrom.y + applied.dy };
+          app.edited = true;
+          app.scheduleReadouts();
+        }
+      }
+      app.scheduleDraw();
+      return;
+    }
+    if (app.tool === "move" && hoverChanged) {
+      app.stage.classList.toggle("is-movable", Boolean(pos && app.elementAt(pos.x, pos.y)));
     }
     if ((app.tool === "rect" || app.tool === "circle") && app.rectAnchor) {
       if (pos) app.rectCurrent = pos;

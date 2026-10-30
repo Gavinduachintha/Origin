@@ -5,6 +5,7 @@ import { installReadouts } from "./readouts.js";
 import { installRender } from "./render.js";
 import { installStorage } from "./storage.js";
 import { installPaint } from "./paint.js";
+import { installLayout } from "./layout.js";
 
 const app = createApp();
 installDocument(app);
@@ -13,6 +14,7 @@ installReadouts(app);
 installRender(app);
 installStorage(app);
 installPaint(app);
+installLayout(app);
 
 for (const swatch of SWATCHES) {
   const button = document.createElement("button");
@@ -45,7 +47,7 @@ app.addForm.addEventListener("submit", (event) => {
   const name = app.cleanName(app.newName.value);
   if (!name) return;
   app.remember();
-  const el = { id: app.uid(), name, visible: true, pixels: {} };
+  const el = { id: app.uid(), name, visible: true, pixels: {}, box: app.freshBox() };
   app.doc.elements.push(el);
   app.doc.activeElementId = el.id;
   app.newName.value = "";
@@ -151,7 +153,7 @@ window.addEventListener("keydown", (event) => {
     }
     return;
   }
-  const next = { b: "pencil", e: "eraser", r: "rect", c: "circle", h: "pan" }[event.key.toLowerCase()];
+  const next = { b: "pencil", e: "eraser", r: "rect", c: "circle", h: "pan", v: "move" }[event.key.toLowerCase()];
   if (next) app.setTool(next);
   if (event.key.toLowerCase() === "f") {
     app.userMoved = false;
@@ -199,6 +201,23 @@ document.querySelector("#download").addEventListener("click", () => {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
   app.showStatus("Downloaded origin.json.");
+});
+
+document.querySelector("#geom-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  app.applyGeometry(
+    Math.round(Number(document.querySelector("#geom-x").value)),
+    Math.round(Number(document.querySelector("#geom-y").value)),
+    Math.round(Number(document.querySelector("#geom-w").value)),
+    Math.round(Number(document.querySelector("#geom-h").value))
+  );
+});
+
+document.querySelector("#fill-box").addEventListener("click", () => app.fillActiveBox());
+
+document.querySelector(".align").addEventListener("click", (event) => {
+  const edge = event.target.closest("[data-align]")?.dataset.align;
+  if (edge) app.alignElement(edge);
 });
 
 document.querySelector("#size-form").addEventListener("submit", (event) => {
